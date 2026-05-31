@@ -1,0 +1,32 @@
+package net.time4j.i18n;
+
+import com.caverock.androidsvg.SVGParser;
+import java.util.Locale;
+
+/* loaded from: classes7.dex */
+public enum LanguageMatch {
+    tl("fil"),
+    no("nb"),
+    in("id"),
+    iw("he");
+
+    static final LanguageMatch[] ALIASES = values();
+    private final String alias;
+
+    LanguageMatch(String str) {
+        this.alias = str;
+    }
+
+    public static String getAlias(Locale locale) {
+        String language = locale.getLanguage();
+        if (language.equals(SVGParser.XML_STYLESHEET_ATTR_ALTERNATE_NO) && locale.getVariant().equals("NY") && locale.getCountry().equals("NO")) {
+            return "nn";
+        }
+        for (LanguageMatch languageMatch : ALIASES) {
+            if (language.equals(languageMatch.name())) {
+                return languageMatch.alias;
+            }
+        }
+        return language;
+    }
+}

@@ -1,0 +1,147 @@
+package io.sentry.android.core;
+
+import android.app.Application;
+import android.content.Context;
+import android.content.pm.ProviderInfo;
+import android.net.Uri;
+import android.os.Process;
+import android.os.SystemClock;
+import io.sentry.ILogger;
+import io.sentry.ITransactionProfiler;
+import io.sentry.JsonSerializer;
+import io.sentry.Sentry;
+import io.sentry.SentryAppStartProfilingOptions;
+import io.sentry.SentryExecutorService;
+import io.sentry.SentryLevel;
+import io.sentry.SentryOptions;
+import io.sentry.TracesSamplingDecision;
+import io.sentry.android.core.internal.util.SentryFrameMetricsCollector;
+import io.sentry.android.core.performance.AppStartMetrics;
+import io.sentry.android.core.performance.TimeSpan;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStreamReader;
+
+/* loaded from: classes6.dex */
+public final class SentryPerformanceProvider extends EmptySecureContentProvider {
+    private static final long sdkInitMillis = SystemClock.uptimeMillis();
+    private Application.ActivityLifecycleCallbacks activityCallback;
+    private Application app;
+    private final BuildInfoProvider buildInfoProvider;
+    private final ILogger logger;
+
+    @Override // android.content.ContentProvider
+    public String getType(Uri uri) {
+        return null;
+    }
+
+    SentryPerformanceProvider(ILogger iLogger, BuildInfoProvider buildInfoProvider) {
+        this.logger = iLogger;
+        this.buildInfoProvider = buildInfoProvider;
+    }
+
+    public SentryPerformanceProvider() {
+        AndroidLogger androidLogger = new AndroidLogger();
+        this.logger = androidLogger;
+        this.buildInfoProvider = new BuildInfoProvider(androidLogger);
+    }
+
+    @Override // android.content.ContentProvider
+    public boolean onCreate() {
+        AppStartMetrics appStartMetrics = AppStartMetrics.getInstance();
+        onAppLaunched(getContext(), appStartMetrics);
+        launchAppStartProfiler(appStartMetrics);
+        return true;
+    }
+
+    @Override // android.content.ContentProvider
+    public void attachInfo(Context context, ProviderInfo providerInfo) {
+        if (SentryPerformanceProvider.class.getName().equals(providerInfo.authority)) {
+            throw new IllegalStateException("An applicationId is required to fulfill the manifest placeholder.");
+        }
+        super.attachInfo(context, providerInfo);
+    }
+
+    @Override // android.content.ContentProvider
+    public void shutdown() {
+        synchronized (AppStartMetrics.getInstance()) {
+            ITransactionProfiler appStartProfiler = AppStartMetrics.getInstance().getAppStartProfiler();
+            if (appStartProfiler != null) {
+                appStartProfiler.close();
+            }
+        }
+    }
+
+    private void launchAppStartProfiler(AppStartMetrics appStartMetrics) {
+        Context context = getContext();
+        if (context == null) {
+            this.logger.log(SentryLevel.FATAL, "App. Context from ContentProvider is null", new Object[0]);
+            return;
+        }
+        if (this.buildInfoProvider.getSdkInfoVersion() < 21) {
+            return;
+        }
+        File file = new File(AndroidOptionsInitializer.getCacheDir(context), Sentry.APP_START_PROFILING_CONFIG_FILE_NAME);
+        if (file.exists() && file.canRead()) {
+            try {
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(new FileInputStream(file)));
+                try {
+                    SentryAppStartProfilingOptions sentryAppStartProfilingOptions = (SentryAppStartProfilingOptions) new JsonSerializer(SentryOptions.empty()).deserialize(bufferedReader, SentryAppStartProfilingOptions.class);
+                    if (sentryAppStartProfilingOptions == null) {
+                        this.logger.log(SentryLevel.WARNING, "Unable to deserialize the SentryAppStartProfilingOptions. App start profiling will not start.", new Object[0]);
+                        bufferedReader.close();
+                        return;
+                    }
+                    if (!sentryAppStartProfilingOptions.isProfilingEnabled()) {
+                        this.logger.log(SentryLevel.INFO, "Profiling is not enabled. App start profiling will not start.", new Object[0]);
+                        bufferedReader.close();
+                        return;
+                    }
+                    TracesSamplingDecision tracesSamplingDecision = new TracesSamplingDecision(Boolean.valueOf(sentryAppStartProfilingOptions.isTraceSampled()), sentryAppStartProfilingOptions.getTraceSampleRate(), Boolean.valueOf(sentryAppStartProfilingOptions.isProfileSampled()), sentryAppStartProfilingOptions.getProfileSampleRate());
+                    appStartMetrics.setAppStartSamplingDecision(tracesSamplingDecision);
+                    if (tracesSamplingDecision.getProfileSampled().booleanValue() && tracesSamplingDecision.getSampled().booleanValue()) {
+                        this.logger.log(SentryLevel.DEBUG, "App start profiling started.", new Object[0]);
+                        AndroidTransactionProfiler androidTransactionProfiler = new AndroidTransactionProfiler(context, this.buildInfoProvider, new SentryFrameMetricsCollector(context, this.logger, this.buildInfoProvider), this.logger, sentryAppStartProfilingOptions.getProfilingTracesDirPath(), sentryAppStartProfilingOptions.isProfilingEnabled(), sentryAppStartProfilingOptions.getProfilingTracesHz(), new SentryExecutorService());
+                        appStartMetrics.setAppStartProfiler(androidTransactionProfiler);
+                        androidTransactionProfiler.start();
+                        bufferedReader.close();
+                        return;
+                    }
+                    this.logger.log(SentryLevel.DEBUG, "App start profiling was not sampled. It will not start.", new Object[0]);
+                    bufferedReader.close();
+                } catch (Throwable th) {
+                    try {
+                        bufferedReader.close();
+                    } catch (Throwable th2) {
+                        th.addSuppressed(th2);
+                    }
+                    throw th;
+                }
+            } catch (FileNotFoundException e) {
+                this.logger.log(SentryLevel.ERROR, "App start profiling config file not found. ", e);
+            } catch (Throwable th3) {
+                this.logger.log(SentryLevel.ERROR, "Error reading app start profiling config file. ", th3);
+            }
+        }
+    }
+
+    private void onAppLaunched(Context context, AppStartMetrics appStartMetrics) {
+        long startUptimeMillis;
+        appStartMetrics.getSdkInitTimeSpan().setStartedAt(sdkInitMillis);
+        if (this.buildInfoProvider.getSdkInfoVersion() >= 24) {
+            TimeSpan appStartTimeSpan = appStartMetrics.getAppStartTimeSpan();
+            startUptimeMillis = Process.getStartUptimeMillis();
+            appStartTimeSpan.setStartedAt(startUptimeMillis);
+        }
+        if (context instanceof Application) {
+            this.app = (Application) context;
+        }
+        Application application = this.app;
+        if (application == null) {
+            return;
+        }
+        appStartMetrics.registerLifecycleCallbacks(application);
+    }
+}

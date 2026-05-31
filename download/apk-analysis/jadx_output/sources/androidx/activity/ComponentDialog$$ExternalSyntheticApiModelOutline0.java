@@ -1,0 +1,125 @@
+package androidx.activity;
+
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationChannelGroup;
+import android.app.Person;
+import android.app.job.JobWorkItem;
+import android.app.slice.Slice;
+import android.app.slice.SliceItem;
+import android.app.slice.SliceSpec;
+import android.content.Context;
+import android.content.Intent;
+import android.content.pm.ShortcutInfo;
+import android.hardware.camera2.params.DynamicRangeProfiles;
+import android.hardware.camera2.params.OutputConfiguration;
+import android.media.AudioRecordingConfiguration;
+import android.media.session.MediaSession;
+import android.net.Uri;
+import android.os.Bundle;
+import android.util.Size;
+import android.window.OnBackInvokedCallback;
+import android.window.OnBackInvokedDispatcher;
+
+/* compiled from: D8$$SyntheticClass */
+/* loaded from: classes.dex */
+public final /* synthetic */ class ComponentDialog$$ExternalSyntheticApiModelOutline0 {
+    public static /* bridge */ /* synthetic */ Notification.MessagingStyle m(Object obj) {
+        return (Notification.MessagingStyle) obj;
+    }
+
+    /* renamed from: m, reason: collision with other method in class */
+    public static /* bridge */ /* synthetic */ NotificationChannel m5m(Object obj) {
+        return (NotificationChannel) obj;
+    }
+
+    public static /* synthetic */ NotificationChannel m(String str, CharSequence charSequence, int i) {
+        return new NotificationChannel(str, charSequence, i);
+    }
+
+    /* renamed from: m, reason: collision with other method in class */
+    public static /* bridge */ /* synthetic */ NotificationChannelGroup m6m(Object obj) {
+        return (NotificationChannelGroup) obj;
+    }
+
+    /* renamed from: m, reason: collision with other method in class */
+    public static /* bridge */ /* synthetic */ Person m7m(Object obj) {
+        return (Person) obj;
+    }
+
+    public static /* synthetic */ JobWorkItem m(Intent intent) {
+        return new JobWorkItem(intent);
+    }
+
+    public static /* synthetic */ Slice.Builder m(Slice.Builder builder) {
+        return new Slice.Builder(builder);
+    }
+
+    public static /* synthetic */ Slice.Builder m(Uri uri, SliceSpec sliceSpec) {
+        return new Slice.Builder(uri, sliceSpec);
+    }
+
+    /* renamed from: m, reason: collision with other method in class */
+    public static /* bridge */ /* synthetic */ SliceItem m9m(Object obj) {
+        return (SliceItem) obj;
+    }
+
+    public static /* synthetic */ SliceSpec m(String str, int i) {
+        return new SliceSpec(str, i);
+    }
+
+    public static /* synthetic */ ShortcutInfo.Builder m(Context context, String str) {
+        return new ShortcutInfo.Builder(context, str);
+    }
+
+    /* renamed from: m, reason: collision with other method in class */
+    public static /* bridge */ /* synthetic */ DynamicRangeProfiles m14m(Object obj) {
+        return (DynamicRangeProfiles) obj;
+    }
+
+    public static /* synthetic */ OutputConfiguration m(Size size, Class cls) {
+        return new OutputConfiguration(size, cls);
+    }
+
+    /* renamed from: m, reason: collision with other method in class */
+    public static /* bridge */ /* synthetic */ OutputConfiguration m15m(Object obj) {
+        return (OutputConfiguration) obj;
+    }
+
+    /* renamed from: m, reason: collision with other method in class */
+    public static /* bridge */ /* synthetic */ AudioRecordingConfiguration m16m(Object obj) {
+        return (AudioRecordingConfiguration) obj;
+    }
+
+    public static /* synthetic */ MediaSession m(Context context, String str, Bundle bundle) {
+        return new MediaSession(context, str, bundle);
+    }
+
+    /* renamed from: m, reason: collision with other method in class */
+    public static /* bridge */ /* synthetic */ OnBackInvokedCallback m18m(Object obj) {
+        return (OnBackInvokedCallback) obj;
+    }
+
+    /* renamed from: m, reason: collision with other method in class */
+    public static /* bridge */ /* synthetic */ OnBackInvokedDispatcher m19m(Object obj) {
+        return (OnBackInvokedDispatcher) obj;
+    }
+
+    /* renamed from: m, reason: collision with other method in class */
+    public static /* bridge */ /* synthetic */ Class m21m() {
+        return Notification.MessagingStyle.class;
+    }
+
+    /* renamed from: m, reason: collision with other method in class */
+    public static /* synthetic */ void m26m() {
+    }
+
+    /* renamed from: m$1, reason: collision with other method in class */
+    public static /* bridge */ /* synthetic */ Class m32m$1() {
+        return Notification.DecoratedCustomViewStyle.class;
+    }
+
+    /* renamed from: m$1, reason: collision with other method in class */
+    public static /* synthetic */ void m33m$1() {
+    }
+}

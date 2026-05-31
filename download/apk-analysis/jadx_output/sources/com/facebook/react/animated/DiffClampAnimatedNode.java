@@ -1,0 +1,44 @@
+package com.facebook.react.animated;
+
+import androidx.camera.video.AudioStats;
+import com.facebook.react.bridge.JSApplicationCausedNativeException;
+import com.facebook.react.bridge.ReadableMap;
+import io.sentry.protocol.MetricSummary;
+
+/* loaded from: classes3.dex */
+class DiffClampAnimatedNode extends ValueAnimatedNode {
+    private final int mInputNodeTag;
+    private double mLastValue = AudioStats.AUDIO_AMPLITUDE_NONE;
+    private final double mMax;
+    private final double mMin;
+    private final NativeAnimatedNodesManager mNativeAnimatedNodesManager;
+
+    public DiffClampAnimatedNode(ReadableMap readableMap, NativeAnimatedNodesManager nativeAnimatedNodesManager) {
+        this.mNativeAnimatedNodesManager = nativeAnimatedNodesManager;
+        this.mInputNodeTag = readableMap.getInt("input");
+        this.mMin = readableMap.getDouble(MetricSummary.JsonKeys.MIN);
+        this.mMax = readableMap.getDouble(MetricSummary.JsonKeys.MAX);
+        this.mValue = AudioStats.AUDIO_AMPLITUDE_NONE;
+    }
+
+    @Override // com.facebook.react.animated.AnimatedNode
+    public void update() {
+        double inputNodeValue = getInputNodeValue();
+        double d = inputNodeValue - this.mLastValue;
+        this.mLastValue = inputNodeValue;
+        this.mValue = Math.min(Math.max(this.mValue + d, this.mMin), this.mMax);
+    }
+
+    private double getInputNodeValue() {
+        AnimatedNode nodeById = this.mNativeAnimatedNodesManager.getNodeById(this.mInputNodeTag);
+        if (nodeById == null || !(nodeById instanceof ValueAnimatedNode)) {
+            throw new JSApplicationCausedNativeException("Illegal node ID set as an input for Animated.DiffClamp node");
+        }
+        return ((ValueAnimatedNode) nodeById).getValue();
+    }
+
+    @Override // com.facebook.react.animated.ValueAnimatedNode, com.facebook.react.animated.AnimatedNode
+    public String prettyPrint() {
+        return "DiffClampAnimatedNode[" + this.mTag + "]: InputNodeTag: " + this.mInputNodeTag + " min: " + this.mMin + " max: " + this.mMax + " lastValue: " + this.mLastValue + " super: " + super.prettyPrint();
+    }
+}
